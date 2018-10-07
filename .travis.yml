@@ -1,0 +1,49 @@
+cache:
+  ccache: true
+  directories:
+    - external/clspv/third_party/
+
+language: cpp
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+
+env:
+  global:
+    - CCACHE_MAXSIZE=2G
+    - CCACHE_COMPRESS=1
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get update -qq; fi
+
+install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -qq g++-7 tree; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 90; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install ccache; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then export PATH="/usr/local/opt/ccache/libexec:$PATH"; fi
+
+before_script:
+  - cd external/clspv
+  - ./utils/fetch_sources.py --deps clang llvm
+  - cd ../..
+  - mkdir build
+  - cd build
+  - cmake --version
+  - cmake -DVULKAN_IMPLEMENTATION=talvos -DSPIRV_WERROR=OFF ..
+
+# to prime caches
+script:
+  - ccache --show-stats
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then gtimeout 2400 make -j2 || true; fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then timeout 2400 make -j2 || true; fi
+  - ccache --show-stats
+
+# with caches primed
+#script:
+#  - make -j2
+#  - ./simple_test
