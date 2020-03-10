@@ -148,9 +148,9 @@ struct cvk_kernel_argument_values {
             return nullptr;
         }
 
-        if (!val->init_copy(other)) {
-            return nullptr;
-        }
+        //if (!val->init_copy(other)) {
+        //    return nullptr;
+        //}
 
         return val;
     }
@@ -184,9 +184,9 @@ struct cvk_kernel_argument_values {
                 return CL_INVALID_ARG_SIZE;
             }
 
-            if (!m_pod_buffer->copy_from(value, arg.offset, size)) {
-                return CL_OUT_OF_RESOURCES;
-            }
+            //if (!m_pod_buffer->copy_from(value, arg.offset, size)) {
+            //    return CL_OUT_OF_RESOURCES;
+            //}
         } else if (arg.kind == kernel_argument_kind::local) {
             CVK_ASSERT(value == nullptr);
             m_local_args_size[arg.pos] = size;

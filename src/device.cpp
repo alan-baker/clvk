@@ -27,6 +27,34 @@ cvk_device* cvk_device::create(VkPhysicalDevice pdev) {
     return device;
 }
 
+uint32_t cvk_device::memory_type_index_for_buffer(uint32_t memory_type_bits) const {
+    char* memory_index = getenv("CLVK_MEMORY_INDEX");
+    if (memory_index) {
+      uint32_t index = static_cast<uint32_t>(std::stol(memory_index));
+      cvk_info("Overriding memory index to %d", index);
+      return index;
+    }
+    uint32_t desiredMemoryTypes[] = {
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+            VK_MEMORY_PROPERTY_HOST_CACHED_BIT |
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+    };
+
+    for (auto mt : desiredMemoryTypes) {
+        for (uint32_t k = 0; k < m_mem_properties.memoryTypeCount; k++) {
+            if (((m_mem_properties.memoryTypes[k].propertyFlags & mt) == mt) &&
+                ((1ULL << k) & memory_type_bits)) {
+                return k;
+            }
+        }
+    }
+
+    return VK_MAX_MEMORY_TYPES;
+}
+
 bool cvk_device::init_queues(uint32_t* num_queues, uint32_t* queue_family) {
     // Get number of queue families
     uint32_t num_families;
